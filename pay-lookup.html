@@ -33,6 +33,12 @@ input:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline
 #sa .pay{color:var(--pink)}
 #sb .row{border-left:4px solid var(--green)}
 #sb .pay{color:var(--green)}
+.row.now{border-width:3px;font-size:1.08rem;font-weight:700}
+.row.now .period::after{content:"　◀ 今天這一期";font-size:.8rem;color:#fff;padding:2px 8px;border-radius:999px;margin-left:6px}
+#sa .row.now{border-color:var(--pink);background:color-mix(in srgb,var(--pink) 14%,var(--surface))}
+#sa .row.now .period::after{background:var(--pink)}
+#sb .row.now{border-color:var(--green);background:color-mix(in srgb,var(--green) 14%,var(--surface))}
+#sb .row.now .period::after{background:var(--green)}
 </style>
 </head>
 <body>
@@ -60,22 +66,23 @@ var NOTES={"2026-12-30":"1/1 元旦放假，可能順延","2027-1-13":"跨年週
 // 熊貓：週一到週日，期末後週三收信，再隔一週週三入帳
 var PA=new Date(2026,10,8); // 期末錨點 11/8
 function pandaRows(){var r=[];for(var k=-40;k<=40;k++){var e=add(PA,14*k),m=add(e,3),p=add(m,7);r.push({s:add(e,-13),e:e,mid:m,midLabel:"收信",p1:p,p2:p,note:NOTES[key(p)]||""})}return r}
-// 581：週一到週一，週四結算，下週一出帳，入帳當週三～五
+// 581：每週一期，週一到下週一，期末後的週四入帳
 var UA=new Date(2026,10,9); // 期末錨點 11/9
-function uberRows(){var r=[];for(var k=-40;k<=40;k++){var e=add(UA,14*k),m=add(e,3);r.push({s:add(e,-14),e:e,mid:m,midLabel:"結算",p1:add(e,9),p2:add(e,11),note:NOTES[key(add(e,9))]||""})}return r}
-function show(id,rows,lo,hi){
+function uberRows(){var r=[];for(var k=-80;k<=80;k++){var e=add(UA,7*k),p=add(e,3);r.push({s:add(e,-7),e:e,mid:e,midLabel:"結束日",mail:(+e===+new Date(2026,10,9)?e:add(e,1)),p1:p,p2:p,note:NOTES[key(p)]||""})}return r}
+function cur(id,r,c){return id==="b"?(c>r.s&&c<=r.e):(c>=r.s&&c<=r.e)}
+function show(id,rows,lo,hi,c){
 var out=rows.filter(function(r){return (r.mid>=lo&&r.mid<=hi)||(r.p2>=lo&&r.p1<=hi)});
 var el=document.getElementById(id);
 if(!out.length){el.innerHTML='<div class="empty">這段期間沒有資料</div>';return}
 el.innerHTML=out.map(function(r){
-return '<div class="row"><div class="period">'+f(r.s).replace(/（.）/,"")+' ～ '+f(r.e).replace(/（.）/,"")+'</div><div class="pay">'+fr(r.p1,r.p2)+'</div><div class="mid">'+r.midLabel+' '+f(r.mid)+'</div>'+(r.note?'<div class="note">'+r.note+'</div>':'')+'</div>'}).join("")}
+return '<div class="row'+(cur(id,r,c)?' now':'')+'"><div class="period">'+f(r.s).replace(/（.）/,"")+' ～ '+f(r.e).replace(/（.）/,"")+'</div><div class="pay">'+fr(r.p1,r.p2)+'</div><div class="mid">'+(r.mail?'收信 '+f(r.mail):r.midLabel+' '+f(r.mid))+'</div>'+(r.note?'<div class="note">'+r.note+'</div>':'')+'</div>'}).join("")}
 var AR=pandaRows(),BR=uberRows();
 function run(){
 var v=document.getElementById("dt").value;if(!v)return;
 var p=v.split("-"),c=new Date(+p[0],+p[1]-1,+p[2]);
 var lo=new Date(c.getFullYear(),c.getMonth()-1,c.getDate()),hi=new Date(c.getFullYear(),c.getMonth()+1,c.getDate());
 document.getElementById("range").textContent="查詢範圍："+lo.getFullYear()+"/"+f(lo)+" ～ "+hi.getFullYear()+"/"+f(hi);
-show("a",AR,lo,hi);show("b",BR,lo,hi);
+show("a",AR,lo,hi,c);show("b",BR,lo,hi,c);
 var s=document.getElementById("src").value;
 document.getElementById("sa").style.display=s==="b"?"none":"";
 document.getElementById("sb").style.display=s==="a"?"none":""}
